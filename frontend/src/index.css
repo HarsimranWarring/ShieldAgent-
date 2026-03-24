@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --shield-bg: #0f172a;
+  --shield-surface: #1e293b;
+  --shield-border: #334155;
+}
+
+body {
+  background-color: var(--shield-bg);
+  color: #f1f5f9;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer components {
+  .severity-critical {
+    @apply bg-red-900/30 border border-red-700 text-red-400;
+  }
+  .severity-high {
+    @apply bg-orange-900/30 border border-orange-700 text-orange-400;
+  }
+  .severity-medium {
+    @apply bg-yellow-900/30 border border-yellow-700 text-yellow-400;
+  }
+  .severity-low {
+    @apply bg-blue-900/30 border border-blue-700 text-blue-400;
+  }
+  .action-blocked {
+    @apply bg-red-600 text-white;
+  }
+  .action-sanitized {
+    @apply bg-orange-500 text-white;
+  }
+  .action-allowed {
+    @apply bg-green-600 text-white;
+  }
+  .card {
+    @apply bg-gray-800 border border-gray-700 rounded-xl p-4;
+  }
+  .highlight-attack {
+    @apply bg-red-900/50 border-b-2 border-red-500 text-red-300 rounded px-0.5;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
