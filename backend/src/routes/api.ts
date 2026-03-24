@@ -1,8 +1,25 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import Database from 'better-sqlite3';
+import rateLimit from 'express-rate-limit';
 import { analyzeContent } from '../detectionEngine';
 import { scenarios } from '../data/scenarios';
+
+const scanLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
+
+const readLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
+});
 
 export function createRouter(db: Database.Database): Router {
   const router = Router();
@@ -12,7 +29,7 @@ export function createRouter(db: Database.Database): Router {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  router.post('/scan', (req: Request, res: Response) => {
+  router.post('/scan', scanLimiter, (req: Request, res: Response) => {
     const { content } = req.body as { content: string };
     if (!content || typeof content !== 'string') {
       return res.status(400).json({ error: 'Content field is required and must be a string' });
@@ -39,7 +56,7 @@ export function createRouter(db: Database.Database): Router {
     return res.json({ id, timestamp, ...result });
   });
 
-  router.post('/custom-analysis', (req: Request, res: Response) => {
+  router.post('/custom-analysis', scanLimiter, (req: Request, res: Response) => {
     const { content } = req.body as { content: string };
     if (!content || typeof content !== 'string') {
       return res.status(400).json({ error: 'Content field is required and must be a string' });
@@ -66,11 +83,11 @@ export function createRouter(db: Database.Database): Router {
     return res.json({ id, timestamp, source: 'custom', ...result });
   });
 
-  router.get('/demo-scenarios', (_req: Request, res: Response) => {
+  router.get('/demo-scenarios', readLimiter, (_req: Request, res: Response) => {
     return res.json(scenarios);
   });
 
-  router.get('/stats', (_req: Request, res: Response) => {
+  router.get('/stats', readLimiter, (_req: Request, res: Response) => {
     const totalStmt = db.prepare('SELECT COUNT(*) as count FROM detection_logs WHERE action != ?');
     const blockedStmt = db.prepare('SELECT COUNT(*) as count FROM detection_logs WHERE action = ?');
     const sanitizedStmt = db.prepare('SELECT COUNT(*) as count FROM detection_logs WHERE action = ?');
@@ -97,7 +114,7 @@ export function createRouter(db: Database.Database): Router {
     });
   });
 
-  router.get('/logs', (_req: Request, res: Response) => {
+  router.get('/logs', readLimiter, (_req: Request, res: Response) => {
     const logsStmt = db.prepare('SELECT * FROM detection_logs ORDER BY timestamp DESC LIMIT 20');
     const logs = logsStmt.all();
     return res.json(logs);
